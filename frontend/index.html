@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Echo Translation</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="header">
+      <h1><span>Echo</span> Translation</h1>
+    </div>
+    <div id="container">
+      <div class="audioControlPanel">
+        <audio id="audioPlayer" controls></audio>
+        <button id="recordButton" hidden>Record</button>
+        <button id="stopButton" disabled hidden>Stop</button>
+        <button id="playButton" disabled hidden>Play</button>
+        <div class="record">
+          <img src="./img/record.png" alt="" />
+        </div>
+        <button id="transcribeButton">Transcribe</button>
+      </div>
+      <div id="transcribePanel">
+        <div class="text" id="englishText">
+          <h2>English Text</h2>
+          <p id="englishContent">
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit. Distinctio
+            sint modi deserunt beatae. Aut iste perferendis, mollitia
+            consequatur nam voluptate modi quos eum ipsam! Repellendus
+            reprehenderit accusamus fugit nobis ex.
+          </p>
+        </div>
+        <div class="text" id="bengaliText">
+          <h2>Bengali Text</h2>
+          <p id="bengaliContent">
+            Lorem ipsum, dolor sit amet consectetur adipisicing elit. Distinctio
+            sint modi deserunt beatae. Aut iste perferendis, mollitia
+            consequatur nam voluptate modi quos eum ipsam! Repellendus
+            reprehenderit accusamus fugit nobis ex.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
