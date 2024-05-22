@@ -47,7 +47,7 @@ def upload_file():
         output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'output.aiff')
         if os.path.exists(output_path):
             os.remove(output_path)
-        command = ['ffmpeg', '-i', file_path, '-c:a', 'pcm_s16be', output_path]
+        command = ['./ffmpeg', '-i', file_path, '-c:a', 'pcm_s16be', output_path]
         subprocess.run(command, check=True)
         file_path = output_path
 
