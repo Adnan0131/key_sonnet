@@ -1,9 +1,20 @@
 import os
-import re
+import io
+import subprocess
+from flask import Flask, request, jsonify, send_from_directory
+from werkzeug.utils import secure_filename
 import speech_recognition as sr
 from googletrans import Translator
+import re
 
-# Function to translate text to English using Google Translate API
+app = Flask(__name__)
+UPLOAD_FOLDER = os.path.join(app.root_path, 'io')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# Function to translate text to Bengali using Google Translate API
 def translate_to_bengali(text):
     translator = Translator()
     try:
@@ -20,39 +31,52 @@ def filter_garbage(text):
     text = re.sub(r'\d+', '', text)
     return text
 
-# Main function to process the audio file
-def process_audio_and_translate():
-    recognizer = sr.Recognizer()
-    audio_file_path = "E:/key_sonnet/final model/io/courage.aiff"
-    
-    with sr.AudioFile(audio_file_path) as source:
-        recorded_audio = recognizer.listen(source)
-        print("Done recording")
-    
-    try:
-        print("Recognizing the text")
-        text = recognizer.recognize_google(recorded_audio, language="en-US")
-        print("Decoded Text : {}".format(text))
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
         
-        # Save the recognized text to a file
-        base_name = os.path.splitext(audio_file_path)[0]
-        english_file_path = base_name + ".txt"
-        with open(english_file_path, "w") as f:
-            f.write(text)
-        print("English text saved to {}".format(english_file_path))
+        # Run the ffmpeg command
+        output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'output.aiff')
+        if os.path.exists(output_path):
+            os.remove(output_path)
+        command = ['ffmpeg', '-i', file_path, '-c:a', 'pcm_s16be', output_path]
+        subprocess.run(command, check=True)
+        file_path = output_path
+
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(file_path) as source:
+            recorded_audio = recognizer.listen(source)
+            print("Done recording")
         
-        # Translate the English text to Bengali
-        bengali_text = translate_to_bengali(text)
-        filtered_bengali_text = filter_garbage(bengali_text)
+        try:
+            print("Recognizing the text")
+            text = recognizer.recognize_google(recorded_audio, language="en-US")
+            print("Decoded Text : {}".format(text))
+            
+            # Translate the English text to Bengali
+            bengali_text = translate_to_bengali(text)
+            filtered_bengali_text = filter_garbage(bengali_text)
+            
+            return jsonify({"english_text": text, "bengali_text": filtered_bengali_text}), 200
         
-        # Save the translated and filtered Bengali text to a file
-        bengali_file_path = base_name + "_bn.txt"
-        with open(bengali_file_path, "w", encoding='utf-8') as f:
-            f.write(filtered_bengali_text)
-        print("Bengali text saved to {}".format(bengali_file_path))
-        
-    except Exception as ex:
-        print(ex)
+        except Exception as ex:
+            return jsonify({"error": str(ex)}), 500
+
+@app.route('/')
+def index():
+    return send_from_directory('frontend', 'index.html')
+
+@app.route('/<path:path>')
+def static_files(path):
+    return send_from_directory('frontend', path)
 
 if __name__ == "__main__":
-    process_audio_and_translate()
+    app.run(debug=True, port=5000)
